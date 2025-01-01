@@ -5,7 +5,7 @@ import numpy as np
 from torch.utils.data import Dataset
 from torchvision.transforms.functional import to_pil_image
 from PIL import Image
-
+from fractions import Fraction
 
 class VideoReader(Dataset):
     def __init__(self, path, transform=None):
@@ -31,7 +31,11 @@ class VideoReader(Dataset):
 class VideoWriter:
     def __init__(self, path, frame_rate, bit_rate=1000000):
         self.container = av.open(path, mode='w')
-        self.stream = self.container.add_stream('h264', rate=f'{frame_rate:.4f}')
+        # self.stream = self.container.add_stream('h264', rate=f'{frame_rate:.4f}')
+        # self.stream = self.container.add_stream('h264', rate=frame_rate)
+        # self.stream = self.container.add_stream('h264', rate=Fraction(frame_rate)) 
+        self.stream = self.container.add_stream('h264', rate=Fraction(frame_rate).limit_denominator(1000))
+
         self.stream.pix_fmt = 'yuv420p'
         self.stream.bit_rate = bit_rate
     

@@ -1,0 +1,16 @@
+# 忽略数据集文件夹
+dataset/
+
+# 忽略输出文件夹
+output/
+input/
+
+# 忽略 Python 缓存文件夹
+__pycache__/
+
+# 忽略压缩文件
+*.zip
+*.tar
+*.pth
+rvm_mobilenetv3.pth
+matting-data

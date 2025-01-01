@@ -13,7 +13,6 @@ dependencies = ['torch', 'torchvision']
 import torch
 from model import MattingNetwork
 
-
 def mobilenetv3(pretrained: bool = True, progress: bool = True):
     model = MattingNetwork('mobilenetv3')
     if pretrained:

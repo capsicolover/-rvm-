@@ -125,6 +125,7 @@ from train_loss import matting_loss, segmentation_loss
 
 class Trainer:
     def __init__(self, rank, world_size):
+        print('1')
         self.parse_args()
         self.init_distributed(rank, world_size)
         self.init_datasets()
@@ -171,14 +172,25 @@ class Trainer:
         parser.add_argument('--disable-validation', action='store_true')
         parser.add_argument('--disable-mixed-precision', action='store_true')
         self.args = parser.parse_args()
+        print('parse')
         
+    # def init_distributed(self, rank, world_size):
+    #     self.rank = rank
+    #     self.world_size = world_size
+    #     self.log('Initializing distributed')
+    #     os.environ['MASTER_ADDR'] = self.args.distributed_addr
+    #     os.environ['MASTER_PORT'] = self.args.distributed_port
+    #     dist.init_process_group("nccl", rank=rank, world_size=world_size)
+    #     print('init_distributed')
     def init_distributed(self, rank, world_size):
+        print("Initializing distributed training...")
         self.rank = rank
         self.world_size = world_size
-        self.log('Initializing distributed')
         os.environ['MASTER_ADDR'] = self.args.distributed_addr
         os.environ['MASTER_PORT'] = self.args.distributed_port
-        dist.init_process_group("nccl", rank=rank, world_size=world_size)
+        dist.init_process_group("gloo", rank=rank, world_size=world_size)  # 修改这里为 "gloo"
+        print("Distributed training initialized.")
+
     
     def init_datasets(self):
         self.log('Initializing matting datasets')
@@ -313,6 +325,7 @@ class Trainer:
             num_workers=self.args.num_workers,
             sampler=self.datasampler_seg_video,
             pin_memory=True)
+        print('init_datasets')
         
     def init_model(self):
         self.log('Initializing model')
@@ -334,12 +347,13 @@ class Trainer:
             {'params': self.model.refiner.parameters(), 'lr': self.args.learning_rate_refiner},
         ])
         self.scaler = GradScaler()
+        print('init_model')
         
     def init_writer(self):
         if self.rank == 0:
             self.log('Initializing writer')
             self.writer = SummaryWriter(self.args.log_dir)
-        
+        print('init_writer')
     def train(self):
         for epoch in range(self.args.epoch_start, self.args.epoch_end):
             self.epoch = epoch
@@ -497,10 +511,18 @@ class Trainer:
     def log(self, msg):
         print(f'[GPU{self.rank}] {msg}')
             
+# if __name__ == '__main__':
+#     world_size = torch.cuda.device_count()
+#     mp.spawn(
+#         Trainer,
+#         nprocs=world_size,
+#         args=(world_size,),
+#         join=True)
 if __name__ == '__main__':
-    world_size = torch.cuda.device_count()
-    mp.spawn(
-        Trainer,
-        nprocs=world_size,
-        args=(world_size,),
-        join=True)
+    try:
+        world_size = 1  # 设置为单个 CPU 运行
+        rank = 0        # 当前进程的 rank
+        print("Starting training on CPU...")
+        trainer = Trainer(rank, world_size)  # 直接初始化 Trainer
+    except Exception as e:
+        print(f"Error during execution: {e}")

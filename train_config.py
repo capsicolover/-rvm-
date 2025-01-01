@@ -33,6 +33,7 @@ Background Video Train/Valid
 
 DATA_PATHS = {
     
+    
     'videomatte': {
         'train': '../matting-data/VideoMatte240K_JPEG_SD/train',
         'valid': '../matting-data/VideoMatte240K_JPEG_SD/valid',
